@@ -5,57 +5,25 @@ require('dotenv').config();
 
 const app = express();
 
-// 1. MIDDLEWARE
+// 1. Middleware
 app.use(express.json());
-// Replace your old app.use(cors()) with this:
-app.use(cors({
-    origin: ["https://hireway-app.vercel.app", "http://localhost:5173"], // Allow both live site and local testing
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
-}));
+app.use(cors({ origin: "*" }));
 
-// 2. DEBUGGING: Check if variables are loading (Will print in terminal)
-console.log("-----------------------------------------");
-console.log("Checking Environment Variables...");
-if (!process.env.MONGO_URI) {
-    console.log("❌ ERROR: MONGO_URI is missing from .env file!");
-} else {
-    console.log("✅ MONGO_URI found in .env");
-}
-console.log("-----------------------------------------");
-
-// 3. MONGODB CONNECTION
+// 2. Database Connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('🚀 SUCCESS: Connected to HireWay Cloud Database');
-  })
-  .catch(err => {
-    console.log('❌ DATABASE CONNECTION ERROR:');
-    console.log(err.message);
-    console.log("-----------------------------------------");
-    console.log("QUICK FIX TIPS:");
-    console.log("1. Check if your password in .env has brackets < >. Remove them!");
-    console.log("2. Check MongoDB Atlas -> Network Access. It must be 0.0.0.0/0 (Active).");
-    console.log("3. Ensure your password doesn't have special characters like @ or #.");
-  });
+  .then(() => console.log('🚀 SUCCESS: Connected to Database'))
+  .catch(err => console.log('❌ DB Error:', err.message));
 
-// 4. IMPORT ROUTES
-const authRoutes = require('./routes/auth');
-// Note: We will add Job and Application routes in Phase 4
+// 3. Routes - MAKE SURE THESE ARE EXACTLY LIKE THIS
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/jobs', require('./routes/jobs'));
+app.use('/api/applications', require('./routes/applications'));
 
-// 5. USE ROUTES
-app.use('/api/auth', authRoutes);app.use('/api/jobs', require('./routes/jobs'));
+// 4. Test Route
+app.get('/', (req, res) => res.send('HireWay API is running...'));
 
-// 6. BASIC TEST ROUTE
-app.get('/', (req, res) => {
-    res.send('HireWay Backend API is running...');
-});
-
-// 7. START SERVER
+// 5. Server Port
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`📡 Server listening on port ${PORT}`);
 });
-// ... existing imports
-app.use('/api/jobs', require('./routes/jobs'));
-app.use('/api/applications', require('./routes/applications')); 

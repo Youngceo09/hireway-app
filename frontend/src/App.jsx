@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard.jsx';
 import PostJob from './pages/PostJob.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import Applicants from './pages/Applicants.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
           <Route path="/post-job" element={<PostJob />} />
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/manage-applicants" element={<Applicants />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </div>
     </Router>

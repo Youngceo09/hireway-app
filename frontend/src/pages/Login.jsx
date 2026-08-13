@@ -37,3 +37,25 @@ export default function Login() {
     </div>
   );
 }
+import { Eye, EyeOff } from 'lucide-react'; // Add these
+
+export default function Login() {
+  const [showPassword, setShowPassword] = useState(false); // Add this state
+
+  // In your return, update the password input:
+  <div className="relative">
+      <input 
+        type={showPassword ? "text" : "password"} 
+        placeholder="Password" 
+        className="w-full p-4 bg-slate-50 border rounded-2xl" 
+        onChange={(e) => setPassword(e.target.value)} 
+      />
+      <button 
+        type="button"
+        className="absolute right-4 top-4 text-slate-400"
+        onClick={() => setShowPassword(!showPassword)}
+      >
+        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+      </button>
+  </div>
+}

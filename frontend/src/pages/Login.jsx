@@ -11,45 +11,28 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      // Changed to use the live Render link automatically
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      navigate('/'); // Redirect to home
-      window.location.reload(); // Refresh to update Navbar
+      navigate('/'); 
+      window.location.reload(); 
     } catch (err) {
-      alert("Invalid Credentials");
+      alert("Invalid Credentials. Please check your email and password.");
     }
   };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6">
-      <div className="bg-white p-10 rounded-[2.5rem] shadow-soft border border-slate-100 w-full max-w-md">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-extrabold text-slate-900">Welcome Back</h2>
-          <p className="text-slate-500 mt-2">Log in to your HireWay account</p>
-        </div>
-
+      <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 w-full max-w-md text-center">
+        <h2 className="text-3xl font-black text-slate-900 mb-2">Welcome Back</h2>
+        <p className="text-slate-500 mb-8">Login to your HireWay account</p>
         <form onSubmit={handleLogin} className="space-y-6">
-          <div className="relative">
-            <Mail className="absolute left-4 top-4 text-slate-400" size={20} />
-            <input type="email" placeholder="Email Address" required className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition"
-              onChange={(e) => setEmail(e.target.value)} />
-          </div>
-
-          <div className="relative">
-            <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
-            <input type="password" placeholder="Password" required className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition"
-              onChange={(e) => setPassword(e.target.value)} />
-          </div>
-
-          <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
-            Login
-          </button>
+          <input type="email" placeholder="Email Address" required className="w-full p-4 bg-slate-50 rounded-2xl border" onChange={(e) => setEmail(e.target.value)} />
+          <input type="password" placeholder="Password" required className="w-full p-4 bg-slate-50 rounded-2xl border" onChange={(e) => setPassword(e.target.value)} />
+          <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 transition">Login</button>
         </form>
-
-        <p className="text-center mt-8 text-slate-600 text-sm">
-          New to HireWay? <Link to="/register" className="text-blue-600 font-bold">Create Account</Link>
-        </p>
+        <p className="mt-8 text-sm">New to HireWay? <Link to="/register" className="text-blue-600 font-bold">Create Account</Link></p>
       </div>
     </div>
   );

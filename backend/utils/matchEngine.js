@@ -1,31 +1,32 @@
 const calculateMatch = (student, job) => {
-    let score = 0;
+    let score = 20; // Base score so jobs always show up at least a little bit
 
-    // 1. Skills Match (40%)
-    if (student.studentProfile.skills && job.requirements) {
-        const matchedSkills = job.requirements.filter(skill => 
-            student.studentProfile.skills.includes(skill)
+    if (!student || !student.studentProfile || !job.requirements) return score;
+
+    const studentSkills = student.studentProfile.skills || [];
+    const jobReqs = job.requirements || [];
+
+    if (jobReqs.length > 0) {
+        // Match skills (Case Insensitive)
+        const matchedSkills = jobReqs.filter(skill => 
+            studentSkills.some(s => s.trim().toLowerCase() === skill.trim().toLowerCase())
         );
-        const skillScore = (matchedSkills.length / job.requirements.length) * 40;
-        score += skillScore || 0;
+        
+        // Skills are 40% of the total
+        score += (matchedSkills.length / jobReqs.length) * 40;
     }
 
-    // 2. Programme Match (20%)
-    if (student.studentProfile.programme === job.targetedProgramme) {
-        score += 20;
+    // Programme Match (20%)
+    if (student.studentProfile.programme && job.targetedProgramme) {
+        if (student.studentProfile.programme.toLowerCase() === job.targetedProgramme.toLowerCase()) {
+            score += 20;
+        }
     }
 
-    // 3. Location Match (10%)
-    if (student.studentProfile.locationPreference === job.location || job.workMode === 'Remote') {
-        score += 10;
-    }
+    // Random variance for interest/experience (up to 20%)
+    score += Math.floor(Math.random() * 20);
 
-    // 4. Random Variance for Experience/Goals (30%)
-    // In a real app, this would compare years of experience.
-    // For this version, we add a base score for profile completion.
-    score += (student.studentProfile.profileProgress / 100) * 30;
-
-    return Math.round(score);
+    return Math.min(Math.round(score), 100);
 };
 
 module.exports = calculateMatch;

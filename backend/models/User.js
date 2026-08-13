@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['student', 'employer'], default: 'student' },
   
-  // Storage for Forgot Password logic
+  // Forgot Password fields
   resetPasswordToken: String,
   resetPasswordExpire: Date,
 

@@ -7,7 +7,7 @@ const app = express();
 
 // 1. MIDDLEWARE
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*" }));
 
 // 2. DEBUGGING: Check if variables are loading (Will print in terminal)
 console.log("-----------------------------------------");
@@ -53,4 +53,4 @@ app.listen(PORT, () => {
 });
 // ... existing imports
 app.use('/api/jobs', require('./routes/jobs'));
-app.use('/api/applications', require('./routes/applications')); // ADD THIS
+app.use('/api/applications', require('./routes/applications')); 

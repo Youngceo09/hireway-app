@@ -93,3 +93,44 @@ router.put('/profile', auth, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
+
+// 1. FORGOT PASSWORD
+router.post('/forgot-password', async (req, res) => {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpire = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const resetUrl = `https://hireway-app.vercel.app/reset-password/${resetToken}`;
+    const message = `You requested a password reset. Click here: ${resetUrl}`;
+
+    try {
+        await sendEmail({ email: user.email, subject: 'Password Reset', message });
+        res.json({ message: "Email sent!" });
+    } catch (err) {
+        res.status(500).json({ message: "Email could not be sent" });
+    }
+});
+
+// 2. RESET PASSWORD
+router.post('/reset-password/:token', async (req, res) => {
+    const user = await User.findOne({
+        resetPasswordToken: req.params.token,
+        resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.json({ message: "Password updated!" });
+});

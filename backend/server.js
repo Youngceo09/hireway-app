@@ -7,7 +7,12 @@ const app = express();
 
 // 1. MIDDLEWARE
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+// Replace your old app.use(cors()) with this:
+app.use(cors({
+    origin: ["https://hireway-app.vercel.app", "http://localhost:5173"], // Allow both live site and local testing
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 
 // 2. DEBUGGING: Check if variables are loading (Will print in terminal)
 console.log("-----------------------------------------");

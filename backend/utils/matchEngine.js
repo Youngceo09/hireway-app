@@ -1,30 +1,31 @@
-const calculateMatch = (student, job) => {
-    let score = 20; // Base score so jobs always show up at least a little bit
+const calculateMatch = (user, job) => {
+    // 1. If it's an employer, do not calculate a match score
+    if (!user || user.role === 'employer') return 0;
 
-    if (!student || !student.studentProfile || !job.requirements) return score;
+    let score = 15; // Base score for students so jobs are visible
 
-    const studentSkills = student.studentProfile.skills || [];
+    if (!user.studentProfile || !job.requirements) return score;
+
+    const studentSkills = user.studentProfile.skills || [];
     const jobReqs = job.requirements || [];
 
+    // 2. Skill Matching (40% Weight) - Case Insensitive
     if (jobReqs.length > 0) {
-        // Match skills (Case Insensitive)
         const matchedSkills = jobReqs.filter(skill => 
             studentSkills.some(s => s.trim().toLowerCase() === skill.trim().toLowerCase())
         );
-        
-        // Skills are 40% of the total
         score += (matchedSkills.length / jobReqs.length) * 40;
     }
 
-    // Programme Match (20%)
-    if (student.studentProfile.programme && job.targetedProgramme) {
-        if (student.studentProfile.programme.toLowerCase() === job.targetedProgramme.toLowerCase()) {
+    // 3. Programme Match (20% Weight)
+    if (user.studentProfile.programme && job.targetedProgramme) {
+        if (user.studentProfile.programme.trim().toLowerCase() === job.targetedProgramme.trim().toLowerCase()) {
             score += 20;
         }
     }
 
-    // Random variance for interest/experience (up to 20%)
-    score += Math.floor(Math.random() * 20);
+    // 4. Random variance for interest (up to 25%)
+    score += Math.floor(Math.random() * 25);
 
     return Math.min(Math.round(score), 100);
 };

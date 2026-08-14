@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'HireWay',
         short_name: 'HireWay',
-        description: 'Smart Student Job Matching Platform',
+        description: 'Smart Student Job Matching',
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',

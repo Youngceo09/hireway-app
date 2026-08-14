@@ -5,3 +5,18 @@ body {
   color: #0f172a;            /* This is text-slate-900 */
   font-family: system-ui, -apple-system, sans-serif;
 }
+/* This ensures the entire app body respects the iPhone notch */
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+body {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Ensure the Navbar stays at the top but content moves below it */
+nav {
+  top: 0 !important;
+}

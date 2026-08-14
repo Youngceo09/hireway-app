@@ -19,7 +19,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-white border-b border-slate-100 py-4 px-8 flex justify-between items-center sticky top-0 z-50">
+<nav className="bg-white border-b border-slate-100 px-8 flex justify-between items-center sticky top-0 z-50 pt-[env(safe-area-inset-top)] h-[calc(64px+env(safe-area-inset-top))]">
         <Link to="/" className="flex items-center gap-2">
           <div className="bg-blue-600 p-2 rounded-lg text-white">
             <Briefcase size={24} />

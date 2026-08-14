@@ -9,30 +9,24 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'HireWay Student Matching',
+        name: 'HireWay Student Match',
         short_name: 'HireWay',
-        description: 'Find your future with HireWay',
+        description: 'Smart Student Job Matching Platform',
         theme_color: '#2563eb',
         background_color: '#ffffff',
-        display: 'standalone',      // THIS hides the browser bars
-        orientation: 'portrait',
-        start_url: '.',              // Tells the app where to begin
-        scope: '/',
+        display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: 'https://cdn-icons-png.flaticon.com/512/3135/3135673.png',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
+            type: 'image/png'
           },
           {
             src: 'https://cdn-icons-png.flaticon.com/512/3135/3135673.png',
             sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
+            type: 'image/png'
           }
         ]
       }

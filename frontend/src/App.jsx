@@ -10,7 +10,7 @@ import MyApplications from './pages/MyApplications.jsx';
 import Applicants from './pages/Applicants.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
-import StudentProfileView from './pages/StudentProfileView.jsx'; // Make sure this matches
+import StudentProfileView from './pages/StudentProfileView.jsx';
 
 export default function App() {
   return (
@@ -27,6 +27,7 @@ export default function App() {
           <Route path="/manage-applicants" element={<Applicants />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          {/* This line is where the error was happening - it must match the import at the top */}
           <Route path="/student-profile/:id" element={<StudentProfileView />} />
         </Routes>
       </div>

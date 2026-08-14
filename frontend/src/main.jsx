@@ -3,9 +3,11 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-// PWA Registration logic
+// Safe PWA Registration
 import { registerSW } from 'virtual:pwa-register'
-registerSW({ immediate: true })
+if (typeof window !== 'undefined') {
+  registerSW({ immediate: true })
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

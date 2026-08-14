@@ -50,3 +50,33 @@ export default function Navbar() {
     </nav>
   );
 }
+import React, { useState, useEffect } from 'react';
+
+// Inside your Navbar component:
+const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+useEffect(() => {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    setDeferredPrompt(e);
+  });
+}, []);
+
+const handleInstallClick = () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User installed the app');
+      }
+      setDeferredPrompt(null);
+    });
+  }
+};
+
+// Add this button somewhere in your Navbar or Dashboard JSX:
+{deferredPrompt && (
+  <button onClick={handleInstallClick} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold animate-bounce">
+    Download App
+  </button>
+)}

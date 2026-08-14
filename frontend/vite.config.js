@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: [],
+      injectRegister: 'inline', // This is the magic line for Vercel
       manifest: {
         name: 'HireWay',
         short_name: 'HireWay',
@@ -17,7 +17,6 @@ export default defineConfig({
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',
-        scope: '/',
         start_url: '/',
         icons: [
           {

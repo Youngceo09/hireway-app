@@ -7,14 +7,15 @@ import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import PostJob from './pages/PostJob.jsx';
 import MyApplications from './pages/MyApplications.jsx';
-import Applicants from './pages/ApplicantsPage.jsx'; // Updated
-import ForgotPassword from './pages/ForgotPage.jsx'; // Updated
-import ResetPassword from './pages/ResetPage.jsx';   // Updated
+import Applicants from './pages/Applicants.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import StudentProfileView from './pages/StudentProfileView.jsx'; // Make sure this matches
 
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#F8FAFC]">
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />

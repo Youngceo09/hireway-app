@@ -10,8 +10,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      },
       manifest: {
-        name: 'HireWay Student Match',
+        name: 'HireWay',
         short_name: 'HireWay',
         description: 'Smart Student Job Matching Platform',
         theme_color: '#2563eb',

@@ -9,7 +9,8 @@ import PostJob from './pages/PostJob.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import Applicants from './pages/Applicants.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
-import ResetPassword from './pages/ResetPassword.jsx';
+// Ensure line 12 (or wherever it is) looks like this:
+import ResetPassword from "./pages/ResetPassword.jsx";
 
 export default function App() {
   return (

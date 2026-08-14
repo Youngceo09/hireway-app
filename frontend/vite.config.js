@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
-        name: 'HireWay',
+        name: 'HireWay Student Match',
         short_name: 'HireWay',
-        description: 'Smart Student Job Matching',
+        description: 'Smart Student Job Matching Platform',
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',

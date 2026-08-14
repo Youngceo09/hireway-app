@@ -9,14 +9,15 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // We set devOptions to true so we can test it locally too
+      devOptions: {
+        enabled: true
+      },
       manifest: {
-        name: 'HireWay Student Match',
+        name: 'HireWay',
         short_name: 'HireWay',
-        description: 'Smart Student Job Matching Platform',
+        description: 'HireWay Student Matching Platform',
         theme_color: '#2563eb',
-        background_color: '#ffffff',
-        display: 'standalone',
-        start_url: '/',
         icons: [
           {
             src: 'https://cdn-icons-png.flaticon.com/512/3135/3135673.png',
@@ -31,5 +32,5 @@ export default defineConfig({
         ]
       }
     })
-  ],
+  ]
 })

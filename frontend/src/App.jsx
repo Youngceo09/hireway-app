@@ -27,7 +27,6 @@ export default function App() {
           <Route path="/manage-applicants" element={<Applicants />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          {/* This line is where the error was happening - it must match the import at the top */}
           <Route path="/student-profile/:id" element={<StudentProfileView />} />
         </Routes>
       </div>

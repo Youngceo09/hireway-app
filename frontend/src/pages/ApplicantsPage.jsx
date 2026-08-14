@@ -12,9 +12,10 @@ export default function Applicants() {
         const token = localStorage.getItem('token');
         
         // Use the VITE_API_URL variable to talk to the live Render backend
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/employer-view`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/employer-view`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+});
+        
         
         setApplicants(res.data);
       } catch (err) {

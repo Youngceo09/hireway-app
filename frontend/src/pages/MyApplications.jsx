@@ -8,9 +8,9 @@ export default function MyApplications() {
   useEffect(() => {
     const fetchApps = async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/applications/my-applications', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/my-applications`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+});
       setApps(res.data);
     };
     fetchApps();

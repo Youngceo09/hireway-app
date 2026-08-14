@@ -10,7 +10,7 @@ export default function Navbar() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
-    window.location.reload(); // Refresh to clear state
+    window.location.reload(); 
   };
 
   return (
@@ -31,7 +31,7 @@ export default function Navbar() {
         {!user ? (
           <>
             <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-blue-600">Login</Link>
-            <Link to="/register" className="bg-blue-600 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+            <Link to="/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
               Create Account
             </Link>
           </>
@@ -50,33 +50,3 @@ export default function Navbar() {
     </nav>
   );
 }
-import React, { useState, useEffect } from 'react';
-
-// Inside your Navbar component:
-const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-useEffect(() => {
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    setDeferredPrompt(e);
-  });
-}, []);
-
-const handleInstallClick = () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User installed the app');
-      }
-      setDeferredPrompt(null);
-    });
-  }
-};
-
-// Add this button somewhere in your Navbar or Dashboard JSX:
-{deferredPrompt && (
-  <button onClick={handleInstallClick} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold animate-bounce">
-    Download App
-  </button>
-)}

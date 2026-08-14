@@ -9,11 +9,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'inline', // This is the magic line for Vercel
+      injectRegister: 'auto',
       manifest: {
         name: 'HireWay',
         short_name: 'HireWay',
-        description: 'Smart Student Job Matching',
+        description: 'Smart Student Job Matching Platform',
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',
@@ -32,5 +32,5 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
 })

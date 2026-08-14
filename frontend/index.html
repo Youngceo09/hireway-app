@@ -1,17 +1,45 @@
-<!doctype html>
-<!-- Apple/iOS specific tags -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HireWay">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135673.png">
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HireWay - Student Job Matching</title>
+    <!-- 1. The Favicon (Browser Icon) -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135673.png" />
+    
+    <!-- 2. Critical Viewport for Mobile Apps (Fixes Notch and Scaling) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
+    
+    <title>HireWay | Smart Student Match</title>
+
+    <!-- 3. Android PWA Meta Tags -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- 4. Apple/iOS App Mode Meta Tags (Hides Address Bar) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HireWay">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135673.png">
+
+    <!-- 5. Modern Typography (Inter Font) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+      /* Smooth scrolling and prevent bounce on mobile */
+      html, body {
+        overflow-x: hidden;
+        height: 100%;
+        font-family: 'Inter', sans-serif;
+        background-color: #F8FAFC;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div> <!-- MUST HAVE THIS -->
+    <!-- The entry point for our React App -->
+    <div id="root"></div>
+
+    <!-- Vite's script loader -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

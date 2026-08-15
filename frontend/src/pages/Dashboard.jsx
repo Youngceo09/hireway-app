@@ -1,105 +1,123 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard, User, PlusCircle, Users, TrendingUp, Clock, LogIn } from 'lucide-react';
+import ProfileEditor from '../components/ProfileEditor';
 
-// We use basic text instead of icons for a second to see if the icons are causing the crash
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('overview');
   const [stats, setStats] = useState({ matches: 0, applied: 0 });
-  const [user, setUser] = useState(null);
-  const [isReady, setIsReady] = useState(false);
+  
+  // 1. Safe User Fetch
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-  useEffect(() => {
-    // 1. Try to get user from localStorage carefully
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        navigate('/login');
-      }
-    } catch (e) {
-      console.error("Storage error");
-      navigate('/login');
-    }
-    setIsReady(true);
-  }, [navigate]);
-
+  // 2. Fetch stats if user is a student
   useEffect(() => {
     const fetchStats = async () => {
       if (!user || user.role !== 'student') return;
       try {
         const token = localStorage.getItem('token');
-        const apiBase = import.meta.env.VITE_API_URL;
-        const resMatch = await axios.get(`${apiBase}/api/jobs/match`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const resApps = await axios.get(`${apiBase}/api/applications/my-applications`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setStats({ matches: resMatch.data.length, applied: resApps.data.length });
-      } catch (err) {
-        console.log("Stats fetch failed");
-      }
+        const headers = { Authorization: `Bearer ${token}` };
+        const matchRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/jobs/match`, { headers });
+        const appRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/my-applications`, { headers });
+        setStats({ matches: matchRes.data.length, applied: appRes.data.length });
+      } catch (err) { console.log("Data sync error") }
     };
-    if (user) fetchStats();
+    fetchStats();
   }, [user]);
 
-  // If we are checking the login, show a plain white background with a message
-  if (!isReady || !user) {
-    return <div style={{padding: '50px', textAlign: 'center'}}>Checking access...</div>;
+  // 3. SHOW THIS IF LOGGED OUT (Prevents blank screen)
+  if (!user) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-10 text-center">
+        <div className="bg-blue-50 p-6 rounded-full text-blue-600 mb-6">
+          <LogIn size={48} />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Session Expired</h2>
+        <p className="text-slate-500 mb-8 max-w-xs">Please log in to access your personalized dashboard and smart matches.</p>
+        <button 
+          onClick={() => navigate('/login')}
+          className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-lg shadow-blue-200 w-full max-w-xs"
+        >
+          Login Now
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* SIMPLE MOBILE NAV */}
-      <div className="flex justify-around bg-white border-b p-4 lg:hidden sticky top-0 z-50">
-        <button onClick={() => setTab('overview')} className={`font-bold ${tab === 'overview' ? 'text-blue-600' : 'text-slate-400'}`}>HOME</button>
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F8FAFC]">
+      
+      {/* MOBILE NAV */}
+      <nav className="lg:hidden bg-white border-b border-slate-100 p-4 flex justify-around sticky top-0 z-40 shadow-sm">
+        <button onClick={() => setTab('overview')} className={`flex flex-col items-center gap-1 text-[10px] font-bold ${tab === 'overview' ? 'text-blue-600' : 'text-slate-300'}`}>
+          <LayoutDashboard size={22} /> HOME
+        </button>
         {user.role === 'student' && (
-          <button onClick={() => setTab('profile')} className={`font-bold ${tab === 'profile' ? 'text-blue-600' : 'text-slate-400'}`}>PROFILE</button>
+          <button onClick={() => setTab('profile')} className={`flex flex-col items-center gap-1 text-[10px] font-bold ${tab === 'profile' ? 'text-blue-600' : 'text-slate-300'}`}>
+            <User size={22} /> PROFILE
+          </button>
         )}
-      </div>
+        <button onClick={() => navigate('/my-applications')} className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300">
+          <Clock size={22} /> APPS
+        </button>
+      </nav>
 
-      <div className="flex flex-1 flex-col lg:flex-row">
-        {/* DESKTOP SIDEBAR */}
-        <aside className="hidden lg:block w-64 bg-white border-r p-8">
-           <button onClick={() => setTab('overview')} className="block w-full text-left py-2 font-bold">Overview</button>
-           <button onClick={() => setTab('profile')} className="block w-full text-left py-2 font-bold">Profile</button>
-        </aside>
-
-        {/* CONTENT */}
-        <main className="flex-1 p-6 lg:p-10">
-          <h1 className="text-3xl font-black mb-4 uppercase">Dashboard</h1>
-          <p className="mb-8 text-slate-500 font-bold">Welcome, {user.name}</p>
-
-          {tab === 'overview' ? (
-            <div className="space-y-4">
-              {user.role === 'employer' ? (
-                <div className="bg-slate-900 p-8 rounded-3xl text-white">
-                  <h2 className="text-xl font-bold mb-4">Employer Hub</h2>
-                  <button onClick={() => navigate('/post-job')} className="bg-blue-600 px-6 py-2 rounded-xl font-bold">Post Job</button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-3xl border shadow-sm">
-                    <p className="text-xs text-slate-400 font-bold">MATCHES</p>
-                    <h3 className="text-3xl font-black">{stats.matches}</h3>
-                  </div>
-                  <div className="bg-white p-6 rounded-3xl border shadow-sm">
-                    <p className="text-xs text-slate-400 font-bold">APPLIED</p>
-                    <h3 className="text-3xl font-black">{stats.applied}</h3>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-             <div className="bg-white p-6 rounded-3xl border">
-                <p>Profile Editor goes here</p>
-             </div>
+      {/* DESKTOP SIDEBAR */}
+      <aside className="w-72 bg-white border-r border-slate-100 p-8 hidden lg:block sticky top-[72px] h-[calc(100vh-72px)]">
+        <div className="space-y-3">
+          <button onClick={() => setTab('overview')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${tab === 'overview' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>
+            <LayoutDashboard size={22} /> Overview
+          </button>
+          {user.role === 'student' && (
+            <button onClick={() => setTab('profile')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>
+              <User size={22} /> My Profile
+            </button>
           )}
-        </main>
-      </div>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 p-6 lg:p-10">
+        <h1 className="text-3xl lg:text-5xl font-black text-slate-900 mb-8 tracking-tighter">Dashboard</h1>
+
+        {tab === 'overview' ? (
+          <div className="space-y-6">
+            {user.role === 'employer' ? (
+              <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white shadow-2xl">
+                  <h2 className="text-2xl font-bold mb-6">Employer Hub</h2>
+                  <div className="flex flex-col gap-3">
+                    <button onClick={() => navigate('/post-job')} className="bg-blue-600 p-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                      <PlusCircle size={20}/> Post New Job
+                    </button>
+                    <button onClick={() => navigate('/manage-applicants')} className="bg-white/10 p-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                      <Users size={20}/> View Applicants
+                    </button>
+                  </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+                   <TrendingUp className="text-blue-600 mb-4" size={32}/>
+                   <p className="text-slate-400 font-bold text-xs uppercase">Matches Found</p>
+                   <h3 className="text-5xl font-black mt-2 text-slate-900">{stats.matches}</h3>
+                </div>
+                <div onClick={() => navigate('/my-applications')} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm cursor-pointer">
+                   <Clock className="text-purple-600 mb-4" size={32}/>
+                   <p className="text-slate-400 font-bold text-xs uppercase">Applications</p>
+                   <h3 className="text-5xl font-black mt-2 text-slate-900">{stats.applied}</h3>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <ProfileEditor />
+        )}
+      </main>
     </div>
   );
 }

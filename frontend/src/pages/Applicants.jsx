@@ -8,7 +8,6 @@ export default function Applicants() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // --- 1. Decision Modal States ---
   const [showModal, setShowConfirm] = useState(false);
   const [actionData, setActionData] = useState({ id: null, status: '', name: '' });
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,21 +19,17 @@ export default function Applicants() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setApplicants(res.data);
-    } catch (err) {
-      console.error("Error fetching applicants");
-    }
+    } catch (err) { console.error("Error fetching applicants") }
     setLoading(false);
   };
 
   useEffect(() => { fetchApplicants(); }, []);
 
-  // --- 2. Trigger Confirmation ---
   const triggerDecision = (id, status, name) => {
     setActionData({ id, status, name });
     setShowConfirm(true);
   };
 
-  // --- 3. Execute the Status Change ---
   const handleStatusUpdate = async () => {
     setIsProcessing(true);
     try {
@@ -43,108 +38,97 @@ export default function Applicants() {
         { status: actionData.status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
       setShowConfirm(false);
-      fetchApplicants(); // Refresh list
-    } catch (err) {
-      alert("Error: Make sure your backend logic is live on Render.");
-    } finally {
-      setIsProcessing(false);
-    }
+      fetchApplicants();
+    } catch (err) { alert("Update failed"); }
+    finally { setIsProcessing(false); }
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 lg:p-10 relative">
-      <h1 className="text-4xl font-black text-slate-900 mb-2">Manage Talent</h1>
-      <p className="text-slate-500 mb-10">Review and take action on student applications.</p>
+    <div className="max-w-6xl mx-auto p-4 lg:p-10 relative">
+      <h1 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2">Applicants</h1>
+      <p className="text-slate-500 mb-8 text-sm lg:text-base font-medium">Review and manage student applications.</p>
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-600" size={40} /></div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {applicants.map(app => (
-            <div key={app._id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 hover:shadow-md transition-all">
+            <div key={app._id} className="bg-white p-5 lg:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 hover:shadow-md transition-all">
               
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-100">
+              {/* STUDENT INFO SECTION */}
+              <div className="flex items-center gap-4 w-full">
+                <div className="w-14 h-14 lg:w-16 lg:h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-xl lg:text-2xl font-black shrink-0 shadow-lg shadow-blue-100">
                   {app.studentId?.name ? app.studentId.name.charAt(0) : 'S'}
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">{app.studentId?.name || "Student"}</h3>
-                  <p className="text-blue-600 text-xs font-bold uppercase tracking-wider">{app.jobId?.title}</p>
-                  <span className={`mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    app.status === 'Shortlisted' ? 'bg-green-100 text-green-600' : 
-                    app.status === 'Rejected' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {app.status}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-slate-900 truncate">{app.studentId?.name || "Student"}</h3>
+                  <p className="text-blue-600 text-xs font-black uppercase truncate tracking-tight">{app.jobId?.title}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
+                      Status: {app.status}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                {/* Decision Buttons */}
+              {/* ACTION BUTTONS SECTION (Always visible, stacks on mobile) */}
+              <div className="flex items-center gap-3 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0">
+                
+                {/* Shortlist Button */}
                 <button 
                   onClick={() => triggerDecision(app._id, 'Shortlisted', app.studentId.name)}
-                  className="p-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-100"
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-3 rounded-xl font-bold text-xs lg:text-sm hover:bg-green-600 transition shadow-lg shadow-green-100"
                 >
-                  <Check size={20} />
+                  <Check size={18} /> <span className="md:hidden">Shortlist</span>
                 </button>
+
+                {/* Reject Button */}
                 <button 
                   onClick={() => triggerDecision(app._id, 'Rejected', app.studentId.name)}
-                  className="p-3 bg-white border border-red-100 text-red-500 hover:bg-red-50 rounded-xl transition"
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-red-100 text-red-500 px-4 py-3 rounded-xl font-bold text-xs lg:text-sm hover:bg-red-50 transition"
                 >
-                  <X size={20} />
+                  <X size={18} /> <span className="md:hidden">Reject</span>
                 </button>
+
+                {/* Profile Link */}
                 <button 
                   onClick={() => navigate(`/student-profile/${app.studentId?._id}`)}
-                  className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition flex items-center gap-2 ml-2"
+                  className="p-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all"
                 >
-                  Profile <ChevronRight size={18} />
+                  <ChevronRight size={20} />
                 </button>
               </div>
             </div>
           ))}
 
           {applicants.length === 0 && (
-             <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed">
-                <UserCheck className="mx-auto text-slate-200 mb-4" size={48} />
-                <p className="text-slate-400 font-bold">No applications found.</p>
+             <div className="text-center py-20 bg-white rounded-[2rem] border border-dashed">
+                <UserCheck className="mx-auto text-slate-200 mb-2" size={40} />
+                <p className="text-slate-400 font-bold">No active candidates.</p>
              </div>
           )}
         </div>
       )}
 
-      {/* --- DECISION CONFIRMATION MODAL --- */}
+      {/* DECISION MODAL (Optimized for Mobile) */}
       {showModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => !isProcessing && setShowConfirm(false)}></div>
-          <div className="relative bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200 text-center">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${actionData.status === 'Shortlisted' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-              {actionData.status === 'Shortlisted' ? <Check size={40} /> : <X size={40} />}
-            </div>
-            
-            <h3 className="text-2xl font-black text-slate-900 mb-2">Are you sure?</h3>
-            <p className="text-slate-500 font-medium mb-8">
-              Do you want to <span className={actionData.status === 'Shortlisted' ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{actionData.status}</span> <b>{actionData.name}</b>?
-              An automated Gmail notification will be sent immediately.
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isProcessing && setShowConfirm(false)}></div>
+          <div className="relative bg-white w-full max-w-sm rounded-[2.5rem] p-8 lg:p-10 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 text-center">
+            <h3 className="text-xl font-black text-slate-900 mb-2">Confirm Decision</h3>
+            <p className="text-slate-500 text-sm mb-8">
+              Move <b>{actionData.name}</b> to <span className={actionData.status === 'Shortlisted' ? 'text-green-600' : 'text-red-600'}>{actionData.status}</span>?
             </p>
-
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <button 
                 onClick={handleStatusUpdate}
                 disabled={isProcessing}
-                className={`w-full py-4 rounded-2xl font-black text-white shadow-xl transition-all flex items-center justify-center gap-2 ${actionData.status === 'Shortlisted' ? 'bg-green-500 hover:bg-green-600 shadow-green-100' : 'bg-red-500 hover:bg-red-600 shadow-red-100'}`}
+                className={`w-full py-4 rounded-2xl font-black text-white shadow-xl flex items-center justify-center gap-2 ${actionData.status === 'Shortlisted' ? 'bg-green-500' : 'bg-red-500'}`}
               >
                 {isProcessing ? "Processing..." : `Confirm ${actionData.status}`}
-                {!isProcessing && <Send size={18} />}
               </button>
-              <button 
-                onClick={() => setShowConfirm(false)}
-                disabled={isProcessing}
-                className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setShowConfirm(false)} className="w-full py-3 text-slate-400 font-bold text-sm">Cancel</button>
             </div>
           </div>
         </div>

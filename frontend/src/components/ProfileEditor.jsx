@@ -14,18 +14,21 @@ export default function ProfileEditor() {
         { ...profile, skills: skillsArray },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Profile Saved! Go to home to see updated match scores.");
-    } catch (err) { alert("Error updating profile"); }
+      alert("Profile Saved!");
+      window.location.reload();
+    } catch (err) { alert("Update failed"); }
   };
 
   return (
-    <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm max-w-2xl">
-      <h2 className="text-2xl font-black text-slate-900 mb-6">Student Profile</h2>
+    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] border border-slate-100 shadow-sm w-full max-w-2xl mx-auto">
+      <h2 className="text-2xl font-black text-slate-900 mb-6">Academic Profile</h2>
       <form onSubmit={handleSave} className="space-y-4">
-        <input placeholder="University" className="w-full p-4 bg-slate-50 border rounded-2xl" onChange={(e) => setProfile({...profile, university: e.target.value})} />
-        <input placeholder="Programme" className="w-full p-4 bg-slate-50 border rounded-2xl" onChange={(e) => setProfile({...profile, programme: e.target.value})} />
-        <textarea placeholder="Skills (React, CSS, Node...)" className="w-full p-4 bg-slate-50 border rounded-2xl h-32" onChange={(e) => setProfile({...profile, skills: e.target.value})} />
-        <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2"><Save size={20}/> Update Matching Profile</button>
+        <input placeholder="University" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none" onChange={(e) => setProfile({...profile, university: e.target.value})} />
+        <input placeholder="Programme" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none" onChange={(e) => setProfile({...profile, programme: e.target.value})} />
+        <textarea placeholder="Skills (React, Node, CSS...)" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none h-32" onChange={(e) => setProfile({...profile, skills: e.target.value})} />
+        <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2">
+          <Save size={20}/> Save Profile
+        </button>
       </form>
     </div>
   );

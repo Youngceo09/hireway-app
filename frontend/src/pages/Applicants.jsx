@@ -1,70 +1,87 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { UserCheck, Mail, ChevronRight, Loader2, Award } from 'lucide-react';
+import { Check, X, Mail, Loader2, UserCircle } from 'lucide-react';
 
 export default function Applicants() {
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchApplicants = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/employer-view`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setApplicants(res.data);
-      } catch (err) {
-        console.error("Error fetching applicants:", err);
-      }
-      setLoading(false);
-    };
-    fetchApplicants();
-  }, []);
+  const fetchApplicants = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/employer-view`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setApplicants(res.data);
+    } catch (err) {
+      console.error("Error fetching applicants");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchApplicants(); }, []);
+
+  const handleStatus = async (id, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/applications/status/${id}`, 
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`Success: Candidate is now ${status}`);
+      fetchApplicants(); // This refreshes the list instantly
+    } catch (err) {
+      alert("Failed to update status. Check your connection.");
+    }
+  };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-4xl font-black text-slate-900 mb-2">Job Applicants</h1>
-      <p className="text-slate-500 mb-10">Review students who matched with your roles.</p>
+    <div className="max-w-5xl mx-auto p-6 lg:p-10">
+      <h1 className="text-3xl font-black text-slate-900 mb-8">Manage Applications</h1>
 
       {loading ? (
-        <Loader2 className="animate-spin mx-auto text-blue-600" size={40} />
+        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-600" size={40} /></div>
       ) : (
-        <div className="grid gap-6">
+        <div className="space-y-4">
           {applicants.map(app => (
-            <div key={app._id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-all">
+            <div key={app._id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+              
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-black">
-                  {app.studentId?.name ? app.studentId.name.charAt(0) : '?'}
+                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+                  {app.studentId?.name?.charAt(0) || 'S'}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{app.studentId?.name || "Unknown Student"}</h3>
-                  <p className="text-blue-600 text-xs font-bold uppercase">{app.jobId?.title || "Deleted Job"}</p>
+                  <h3 className="font-bold text-lg text-slate-900">{app.studentId?.name || "Student"}</h3>
+                  <p className="text-blue-600 text-xs font-bold uppercase">{app.jobId?.title}</p>
+                  <div className={`mt-1 inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${app.status === 'Shortlisted' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                    Current Status: {app.status}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="hidden md:block text-right">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Status</p>
-                  <p className="text-sm font-bold text-slate-600">{app.status}</p>
-                </div>
-                {/* 1. BUTTON TO VIEW FULL PROFILE */}
+              {/* ACTION BUTTONS - CLEARLY VISIBLE NOW */}
+              <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => navigate(`/student-profile/${app.studentId?._id}`)}
-                  className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center gap-2"
+                  onClick={() => handleStatus(app._id, 'Shortlisted')}
+                  className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-green-100"
                 >
-                  View Profile <ChevronRight size={18} />
+                  <Check size={18} /> Shortlist
+                </button>
+
+                <button 
+                  onClick={() => handleStatus(app._id, 'Rejected')}
+                  className="flex items-center gap-2 bg-white border border-red-200 text-red-500 hover:bg-red-50 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                >
+                  <X size={18} /> Reject
                 </button>
               </div>
+
             </div>
           ))}
 
           {applicants.length === 0 && (
-            <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed">
-               <UserCheck className="mx-auto text-slate-200 mb-4" size={48} />
-               <p className="text-slate-400 font-bold">No applications yet.</p>
+            <div className="text-center py-20 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+               <p className="text-slate-400 font-bold">No students have applied yet.</p>
             </div>
           )}
         </div>

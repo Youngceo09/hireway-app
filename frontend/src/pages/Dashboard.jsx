@@ -1,110 +1,103 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, User, Briefcase, PlusCircle, Users, TrendingUp, Clock } from 'lucide-react';
-import ProfileEditor from '../components/ProfileEditor';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('overview');
   const [stats, setStats] = useState({ matches: 0, applied: 0 });
-  
-  // 1. Get user with safe fallback
-  const userString = localStorage.getItem('user');
-  const user = userString ? JSON.parse(userString) : null;
+  const [user, setUser] = useState(null);
 
-  // 2. Security Check
+  // 1. Load user data safely
   useEffect(() => {
-    if (!user) {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    } else {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
-  // 3. Fetch Data safely
+  // 2. Fetch Stats
   useEffect(() => {
-    const fetchStats = async () => {
-      if (!user || user.role !== 'student') return;
+    if (!user || user.role !== 'student') return;
+    const getData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
         const api = import.meta.env.VITE_API_URL;
-        
-        const mRes = await axios.get(`${api}/api/jobs/match`, config);
-        const aRes = await axios.get(`${api}/api/applications/my-applications`, config);
-        
-        setStats({ matches: mRes.data.length, applied: aRes.data.length });
-      } catch (err) { console.log("Stats error") }
+        const headers = { Authorization: `Bearer ${token}` };
+        const resM = await axios.get(`${api}/api/jobs/match`, { headers });
+        const resA = await axios.get(`${api}/api/applications/my-applications`, { headers });
+        setStats({ matches: resM.data.length, applied: resA.data.length });
+      } catch (e) { console.log("Fetch error"); }
     };
-    fetchStats();
+    getData();
   }, [user]);
 
-  if (!user) return null;
+  if (!user) return <div className="p-20 text-center font-bold text-blue-600">Loading Secure Dashboard...</div>;
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F8FAFC]">
-      
-      {/* MOBILE NAV (Visible only on phone) */}
-      <div className="lg:hidden bg-white border-b p-4 flex justify-around sticky top-0 z-40 shadow-sm">
-        <button onClick={() => setTab('overview')} className={`p-2 rounded-xl ${tab === 'overview' ? 'text-blue-600 bg-blue-50' : 'text-slate-400'}`}>
-          <LayoutDashboard size={24} />
-        </button>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* MOBILE NAVIGATION BAR */}
+      <div className="flex justify-around bg-white border-b border-slate-200 p-4 lg:hidden sticky top-0 z-50">
+        <button onClick={() => setTab('overview')} className={`text-xs font-black uppercase ${tab === 'overview' ? 'text-blue-600' : 'text-slate-400'}`}>Stats</button>
         {user.role === 'student' && (
-          <button onClick={() => setTab('profile')} className={`p-2 rounded-xl ${tab === 'profile' ? 'text-blue-600 bg-blue-50' : 'text-slate-400'}`}>
-            <User size={24} />
-          </button>
+          <button onClick={() => setTab('profile')} className={`text-xs font-black uppercase ${tab === 'profile' ? 'text-blue-600' : 'text-slate-400'}`}>Edit Profile</button>
         )}
+        <button onClick={() => navigate('/my-applications')} className="text-xs font-black uppercase text-slate-400">My Apps</button>
       </div>
 
-      {/* DESKTOP SIDEBAR */}
-      <aside className="w-72 bg-white border-r border-slate-100 p-8 hidden lg:block">
-        <div className="space-y-4">
-          <button onClick={() => setTab('overview')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${tab === 'overview' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>
-            <LayoutDashboard size={22} /> Overview
-          </button>
-          {user.role === 'student' && (
-            <button onClick={() => setTab('profile')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>
-              <User size={22} /> My Profile
-            </button>
-          )}
-        </div>
-      </aside>
-
-      <main className="flex-1 p-6 lg:p-10">
-        <h1 className="text-3xl lg:text-5xl font-black text-slate-900 mb-8">Dashboard</h1>
-
-        {tab === 'overview' ? (
-          <div>
-            {user.role === 'employer' ? (
-              <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white shadow-2xl">
-                  <h2 className="text-2xl font-bold mb-6">Employer Hub</h2>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <button onClick={() => navigate('/post-job')} className="bg-blue-600 px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2">
-                      <PlusCircle size={20}/> Post Job
-                    </button>
-                    <button onClick={() => navigate('/manage-applicants')} className="bg-white/10 px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2">
-                      <Users size={20}/> Applicants
-                    </button>
-                  </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-                   <TrendingUp className="text-blue-600 mb-4" size={32}/>
-                   <p className="text-slate-400 font-bold text-xs uppercase">Smart Matches</p>
-                   <h3 className="text-4xl font-black mt-2 text-slate-900">{stats.matches}</h3>
-                </div>
-                <div onClick={() => navigate('/my-applications')} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm cursor-pointer hover:border-blue-200 transition-all">
-                   <Clock className="text-purple-600 mb-4" size={32}/>
-                   <p className="text-slate-400 font-bold text-xs uppercase">Applications</p>
-                   <h3 className="text-4xl font-black mt-2 text-slate-900">{stats.applied}</h3>
-                </div>
-              </div>
-            )}
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {/* DESKTOP SIDEBAR */}
+        <aside className="hidden lg:block w-72 bg-white border-r border-slate-100 p-10">
+          <div className="space-y-4">
+            <button onClick={() => setTab('overview')} className={`w-full text-left p-4 rounded-2xl font-bold ${tab === 'overview' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Overview</button>
+            <button onClick={() => setTab('profile')} className={`w-full text-left p-4 rounded-2xl font-bold ${tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>My Profile</button>
           </div>
-        ) : (
-          <ProfileEditor />
-        )}
-      </main>
+        </aside>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="flex-1 p-6 lg:p-12">
+          <h1 className="text-3xl lg:text-5xl font-black text-slate-900 mb-8 tracking-tighter">Control Center</h1>
+
+          {tab === 'overview' ? (
+            <div className="space-y-6">
+              {user.role === 'employer' ? (
+                <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white shadow-2xl text-center">
+                  <h2 className="text-2xl font-bold mb-6">Employer Hub</h2>
+                  <div className="flex flex-col gap-3">
+                    <button onClick={() => navigate('/post-job')} className="bg-blue-600 p-4 rounded-2xl font-bold">Post a New Job</button>
+                    <button onClick={() => navigate('/manage-applicants')} className="bg-white/10 p-4 rounded-2xl font-bold">View Applicants</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                    <p className="text-blue-600 font-black text-xs uppercase tracking-widest mb-2">Live Matches</p>
+                    <h3 className="text-6xl font-black text-slate-900">{stats.matches}</h3>
+                  </div>
+                  <div onClick={() => navigate('/my-applications')} className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                    <p className="text-purple-600 font-black text-xs uppercase tracking-widest mb-2">Applications</p>
+                    <h3 className="text-6xl font-black text-slate-900">{stats.applied}</h3>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* INLINED PROFILE EDITOR - NO EXTERNAL IMPORT NEEDED */
+            <div className="bg-white p-8 lg:p-12 rounded-[2.5rem] border border-slate-100 shadow-sm max-w-2xl">
+              <h2 className="text-2xl font-black text-slate-900 mb-6 uppercase">Academic Profile</h2>
+              <p className="text-slate-500 mb-8 font-medium italic">Update your skills on your phone instantly.</p>
+              <div className="space-y-4">
+                 <input placeholder="University Name" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none" />
+                 <input placeholder="Study Programme" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none" />
+                 <textarea placeholder="Skills (comma separated)" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none h-32" />
+                 <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">Save Profile Changes</button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

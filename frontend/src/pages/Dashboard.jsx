@@ -1,124 +1,105 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, User, PlusCircle, Users, TrendingUp, Clock, Bell } from 'lucide-react';
-import ProfileEditor from '../components/ProfileEditor';
 
+// We use basic text instead of icons for a second to see if the icons are causing the crash
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('overview');
   const [stats, setStats] = useState({ matches: 0, applied: 0 });
-  
-  // 1. Get user data safely with a check
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const [user, setUser] = useState(null);
+  const [isReady, setIsReady] = useState(false);
 
-  // 2. Security Redirect: If no user, go to login
   useEffect(() => {
-    if (!user) {
+    // 1. Try to get user from localStorage carefully
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        navigate('/login');
+      }
+    } catch (e) {
+      console.error("Storage error");
       navigate('/login');
     }
-  }, [user, navigate]);
+    setIsReady(true);
+  }, [navigate]);
 
-  // 3. Fetch Stats only if student
   useEffect(() => {
     const fetchStats = async () => {
+      if (!user || user.role !== 'student') return;
       try {
         const token = localStorage.getItem('token');
-        if (!token) return;
-        
-        const headers = { Authorization: `Bearer ${token}` };
-        const matchRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/jobs/match`, { headers });
-        const appRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications/my-applications`, { headers });
-        
-        setStats({ matches: matchRes.data.length, applied: appRes.data.length });
-      } catch (err) { console.log("Stats fetch failed") }
+        const apiBase = import.meta.env.VITE_API_URL;
+        const resMatch = await axios.get(`${apiBase}/api/jobs/match`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const resApps = await axios.get(`${apiBase}/api/applications/my-applications`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setStats({ matches: resMatch.data.length, applied: resApps.data.length });
+      } catch (err) {
+        console.log("Stats fetch failed");
+      }
     };
-    if (user?.role === 'student') fetchStats();
+    if (user) fetchStats();
   }, [user]);
 
-  // CRITICAL: If user is not found, stop the code here so it doesn't crash below
-  if (!user) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">Redirecting to login...</div>;
+  // If we are checking the login, show a plain white background with a message
+  if (!isReady || !user) {
+    return <div style={{padding: '50px', textAlign: 'center'}}>Checking access...</div>;
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F8FAFC]">
-      
-      {/* MOBILE NAV (Always at the top of the dashboard on phones) */}
-      <nav className="lg:hidden bg-white border-b border-slate-100 p-4 flex justify-around sticky top-[72px] z-40 backdrop-blur-md bg-white/90">
-        <button onClick={() => setTab('overview')} className={`flex flex-col items-center gap-1 text-[10px] font-bold ${tab === 'overview' ? 'text-blue-600' : 'text-slate-300'}`}>
-          <LayoutDashboard size={20} /> Home
-        </button>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* SIMPLE MOBILE NAV */}
+      <div className="flex justify-around bg-white border-b p-4 lg:hidden sticky top-0 z-50">
+        <button onClick={() => setTab('overview')} className={`font-bold ${tab === 'overview' ? 'text-blue-600' : 'text-slate-400'}`}>HOME</button>
         {user.role === 'student' && (
-          <button onClick={() => setTab('profile')} className={`flex flex-col items-center gap-1 text-[10px] font-bold ${tab === 'profile' ? 'text-blue-600' : 'text-slate-300'}`}>
-            <User size={20} /> Profile
-          </button>
+          <button onClick={() => setTab('profile')} className={`font-bold ${tab === 'profile' ? 'text-blue-600' : 'text-slate-400'}`}>PROFILE</button>
         )}
-        <button onClick={() => navigate('/my-applications')} className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300">
-          <Clock size={20} /> Apps
-        </button>
-      </nav>
+      </div>
 
-      {/* DESKTOP SIDEBAR */}
-      <aside className="w-72 bg-white border-r border-slate-100 p-8 hidden lg:block sticky top-[72px] h-[calc(100vh-72px)]">
-        <div className="space-y-3">
-          <button onClick={() => setTab('overview')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${tab === 'overview' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>
-            <LayoutDashboard size={22} /> Overview
-          </button>
-          {user.role === 'student' && (
-            <button onClick={() => setTab('profile')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>
-              <User size={22} /> My Profile
-            </button>
-          )}
-          <button onClick={() => navigate('/my-applications')} className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-50">
-            <Clock size={22} /> My Applications
-          </button>
-        </div>
-      </aside>
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {/* DESKTOP SIDEBAR */}
+        <aside className="hidden lg:block w-64 bg-white border-r p-8">
+           <button onClick={() => setTab('overview')} className="block w-full text-left py-2 font-bold">Overview</button>
+           <button onClick={() => setTab('profile')} className="block w-full text-left py-2 font-bold">Profile</button>
+        </aside>
 
-      {/* CONTENT */}
-      <main className="flex-1 p-6 lg:p-10">
-        <header className="flex justify-between items-center mb-8">
-            <div>
-                <h1 className="text-3xl lg:text-5xl font-black text-slate-900 tracking-tighter">Dashboard</h1>
-                <p className="text-slate-400 font-bold text-xs uppercase mt-2">Account: {user.name || 'User'}</p>
-            </div>
-            <div className="bg-white p-3 rounded-2xl border text-slate-300"><Bell size={20} /></div>
-        </header>
+        {/* CONTENT */}
+        <main className="flex-1 p-6 lg:p-10">
+          <h1 className="text-3xl font-black mb-4 uppercase">Dashboard</h1>
+          <p className="mb-8 text-slate-500 font-bold">Welcome, {user.name}</p>
 
-        {tab === 'overview' ? (
-          <div className="animate-in fade-in duration-500">
-            {user.role === 'employer' ? (
-              <div className="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
-                  <div className="relative z-10">
-                    <h2 className="text-3xl font-bold mb-2">Employer Hub</h2>
-                    <p className="text-slate-400 mb-8">Manage student applications here.</p>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <button onClick={() => navigate('/post-job')} className="bg-blue-600 px-8 py-3 rounded-xl font-bold">Post Job</button>
-                      <button onClick={() => navigate('/manage-applicants')} className="bg-white/10 px-8 py-3 rounded-xl font-bold">Applicants</button>
-                    </div>
+          {tab === 'overview' ? (
+            <div className="space-y-4">
+              {user.role === 'employer' ? (
+                <div className="bg-slate-900 p-8 rounded-3xl text-white">
+                  <h2 className="text-xl font-bold mb-4">Employer Hub</h2>
+                  <button onClick={() => navigate('/post-job')} className="bg-blue-600 px-6 py-2 rounded-xl font-bold">Post Job</button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-6 rounded-3xl border shadow-sm">
+                    <p className="text-xs text-slate-400 font-bold">MATCHES</p>
+                    <h3 className="text-3xl font-black">{stats.matches}</h3>
                   </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm">
-                   <TrendingUp className="text-blue-600 mb-4" size={32}/>
-                   <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Smart Matches</p>
-                   <h3 className="text-5xl font-black text-slate-900 mt-2">{stats.matches}</h3>
+                  <div className="bg-white p-6 rounded-3xl border shadow-sm">
+                    <p className="text-xs text-slate-400 font-bold">APPLIED</p>
+                    <h3 className="text-3xl font-black">{stats.applied}</h3>
+                  </div>
                 </div>
-                <div onClick={() => navigate('/my-applications')} className="bg-white p-8 rounded-[2.5rem] border shadow-sm cursor-pointer">
-                   <Clock className="text-purple-600 mb-4" size={32}/>
-                   <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Applied</p>
-                   <h3 className="text-5xl font-black text-slate-900 mt-2">{stats.applied}</h3>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <ProfileEditor />
-        )}
-      </main>
+              )}
+            </div>
+          ) : (
+             <div className="bg-white p-6 rounded-3xl border">
+                <p>Profile Editor goes here</p>
+             </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

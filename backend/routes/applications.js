@@ -3,76 +3,108 @@ const router = express.Router();
 const Application = require('../models/Application');
 const Job = require('../models/Job');
 const auth = require('../middleware/authMiddleware');
-const sendEmail = require('../utils/sendEmail'); // Ensure this file exists!
+const sendEmail = require('../utils/sendEmail');
 
-// 1. Student applies for a job
+// 1. STUDENT: Apply for a job
 router.post('/apply/:jobId', auth, async (req, res) => {
     try {
-        const existing = await Application.findOne({ jobId: req.params.jobId, studentId: req.user.id });
-        if (existing) return res.status(400).json({ message: "Already applied" });
-        const newApp = new Application({ jobId: req.params.jobId, studentId: req.user.id });
+        const existingApp = await Application.findOne({ 
+            jobId: req.params.jobId, 
+            studentId: req.user.id 
+        });
+
+        if (existingApp) return res.status(400).json({ message: "You have already applied for this job." });
+
+        const newApp = new Application({
+            jobId: req.params.jobId,
+            studentId: req.user.id,
+            status: 'Applied'
+        });
+
         await newApp.save();
-        res.status(201).json({ message: "Success" });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        res.status(201).json({ message: "Application submitted successfully!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// 2. THIS IS THE CRITICAL PART: Employer updates status and sends Gmail
+// 2. STUDENT VIEW: See all my applications (Shows everything including Rejected)
+router.get('/my-applications', auth, async (req, res) => {
+    try {
+        const apps = await Application.find({ studentId: req.user.id })
+            .populate('jobId')
+            .sort({ appliedAt: -1 });
+        res.json(apps);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. EMPLOYER VIEW: See active candidates ONLY
+// This route now FILTERS OUT students who have been Rejected
+router.get('/employer-view', auth, async (req, res) => {
+    try {
+        if (req.user.role !== 'employer') return res.status(403).json({ message: "Access denied." });
+
+        // Step A: Find all jobs posted by this employer
+        const myJobs = await Job.find({ employerId: req.user.id });
+        const myJobIds = myJobs.map(job => job._id);
+
+        // Step B: Find applications that are NOT "Rejected"
+        const apps = await Application.find({ 
+            jobId: { $in: myJobIds },
+            status: { $ne: 'Rejected' } // $ne means "Not Equal"
+        })
+        .populate('jobId')
+        .populate('studentId', 'name email studentProfile')
+        .sort({ appliedAt: -1 });
+        
+        res.json(apps);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. EMPLOYER ACTION: Update Status & Send Real-time Gmail
 router.put('/status/:id', auth, async (req, res) => {
     try {
         const { status } = req.body; 
         
-        // Find application and get student/job details for the email
         const app = await Application.findByIdAndUpdate(req.params.id, { status }, { new: true })
             .populate('studentId')
             .populate('jobId');
 
         if (!app) return res.status(404).json({ message: "Application not found" });
 
-        // Try to send the email notification
-        try {
-            const message = `
-                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                    <h2 style="color: #2563eb;">Update on your Application</h2>
-                    <p>Hello <b>${app.studentId.name}</b>,</p>
-                    <p>The employer at <b>${app.jobId.company}</b> has updated your status for the <b>${app.jobId.title}</b> position to:</p>
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; font-weight: bold; color: #1e40af; text-align: center; font-size: 20px;">
-                        ${status}
-                    </div>
-                    <p style="margin-top: 20px;">Log in to HireWay to see more details.</p>
+        // Send Email Notification
+        const message = `
+            <div style="font-family: sans-serif; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;">
+                <h2 style="color: #2563eb;">HireWay Application Update</h2>
+                <p>Hello <b>${app.studentId.name}</b>,</p>
+                <p>Your application status for <b>${app.jobId.title}</b> at <b>${app.jobId.company}</b> has been updated to:</p>
+                <div style="background: #eff6ff; color: #1e40af; padding: 20px; text-align: center; border-radius: 10px; font-size: 24px; font-weight: bold; margin: 20px 0;">
+                    ${status}
                 </div>
-            `;
+                <p>Please log in to your dashboard for further instructions.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p style="font-size: 12px; color: #94a3b8;">This is an automated notification from the HireWay Match Engine.</p>
+            </div>
+        `;
 
+        try {
             await sendEmail({
                 email: app.studentId.email,
-                subject: `Application Status: ${status}`,
+                subject: `HireWay: Your application is ${status}`,
                 message
             });
-        } catch (mailError) {
-            console.log("Gmail failed, but status was updated in DB.");
+        } catch (mailErr) {
+            console.log("Email failed, but database was updated.");
         }
 
-        res.json({ message: "Status updated successfully", app });
+        res.json({ message: "Status updated and student notified.", app });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
-
-// Student sees their own apps
-router.get('/my-applications', auth, async (req, res) => {
-    try {
-        const apps = await Application.find({ studentId: req.user.id }).populate('jobId');
-        res.json(apps);
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// Employer sees everyone who applied to THEIR jobs
-router.get('/employer-view', auth, async (req, res) => {
-    try {
-        const jobs = await Job.find({ employerId: req.user.id });
-        const ids = jobs.map(j => j._id);
-        const apps = await Application.find({ jobId: { $in: ids } }).populate('jobId').populate('studentId');
-        res.json(apps);
-    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 module.exports = router;

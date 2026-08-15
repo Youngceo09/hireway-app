@@ -15,7 +15,6 @@ import StudentProfileView from './pages/StudentProfileView.jsx';
 export default function App() {
   return (
     <Router>
-        <React.Suspense fallback={<div className="p-20 text-center">Loading HireWay...</div>}></React.Suspense>
       <div className="min-h-screen bg-[#F8FAFC]">
         <Navbar />
         <Routes>

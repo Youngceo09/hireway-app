@@ -5,7 +5,7 @@ const Job = require('../models/Job');
 const auth = require('../middleware/authMiddleware');
 const sendEmail = require('../utils/sendEmail');
 
-// 1. STUDENT: Apply for a job
+// 1. STUDENT: Apply or Re-apply for a job
 router.post('/apply/:jobId', auth, async (req, res) => {
     try {
         const existingApp = await Application.findOne({ 
@@ -13,8 +13,20 @@ router.post('/apply/:jobId', auth, async (req, res) => {
             studentId: req.user.id 
         });
 
-        if (existingApp) return res.status(400).json({ message: "You have already applied for this job." });
+        if (existingApp) {
+            // IF THE STUDENT WAS PREVIOUSLY REJECTED, ALLOW THEM TO RE-APPLY
+            if (existingApp.status === 'Rejected') {
+                existingApp.status = 'Applied';
+                existingApp.appliedAt = Date.now(); // Reset the time to now
+                await existingApp.save();
+                return res.status(201).json({ message: "Re-applied successfully! The employer will see your fresh application." });
+            } else {
+                // BLOCK IF THEY ARE ALREADY IN THE PIPELINE (Applied, Shortlisted, etc.)
+                return res.status(400).json({ message: "You already have an active application for this job." });
+            }
+        }
 
+        // FRESH APPLICATION (First time)
         const newApp = new Application({
             jobId: req.params.jobId,
             studentId: req.user.id,
@@ -28,7 +40,7 @@ router.post('/apply/:jobId', auth, async (req, res) => {
     }
 });
 
-// 2. STUDENT VIEW: See all my applications (Shows everything including Rejected)
+// 2. STUDENT VIEW: See all my applications
 router.get('/my-applications', auth, async (req, res) => {
     try {
         const apps = await Application.find({ studentId: req.user.id })
@@ -40,20 +52,17 @@ router.get('/my-applications', auth, async (req, res) => {
     }
 });
 
-// 3. EMPLOYER VIEW: See active candidates ONLY
-// This route now FILTERS OUT students who have been Rejected
+// 3. EMPLOYER VIEW: See active candidates ONLY (Hides Rejected)
 router.get('/employer-view', auth, async (req, res) => {
     try {
         if (req.user.role !== 'employer') return res.status(403).json({ message: "Access denied." });
 
-        // Step A: Find all jobs posted by this employer
         const myJobs = await Job.find({ employerId: req.user.id });
         const myJobIds = myJobs.map(job => job._id);
 
-        // Step B: Find applications that are NOT "Rejected"
         const apps = await Application.find({ 
             jobId: { $in: myJobIds },
-            status: { $ne: 'Rejected' } // $ne means "Not Equal"
+            status: { $ne: 'Rejected' } 
         })
         .populate('jobId')
         .populate('studentId', 'name email studentProfile')
@@ -65,43 +74,33 @@ router.get('/employer-view', auth, async (req, res) => {
     }
 });
 
-// 4. EMPLOYER ACTION: Update Status & Send Real-time Gmail
+// 4. EMPLOYER ACTION: Update Status & Send Gmail
 router.put('/status/:id', auth, async (req, res) => {
     try {
         const { status } = req.body; 
         
         const app = await Application.findByIdAndUpdate(req.params.id, { status }, { new: true })
-            .populate('studentId')
-            .populate('jobId');
+            .populate('studentId').populate('jobId');
 
         if (!app) return res.status(404).json({ message: "Application not found" });
 
-        // Send Email Notification
         const message = `
             <div style="font-family: sans-serif; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;">
                 <h2 style="color: #2563eb;">HireWay Application Update</h2>
                 <p>Hello <b>${app.studentId.name}</b>,</p>
-                <p>Your application status for <b>${app.jobId.title}</b> at <b>${app.jobId.company}</b> has been updated to:</p>
+                <p>The employer for <b>${app.jobId.title}</b> at <b>${app.jobId.company}</b> has updated your status to:</p>
                 <div style="background: #eff6ff; color: #1e40af; padding: 20px; text-align: center; border-radius: 10px; font-size: 24px; font-weight: bold; margin: 20px 0;">
                     ${status}
                 </div>
-                <p>Please log in to your dashboard for further instructions.</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                <p style="font-size: 12px; color: #94a3b8;">This is an automated notification from the HireWay Match Engine.</p>
+                <p>Please log in to your dashboard for details.</p>
             </div>
         `;
 
         try {
-            await sendEmail({
-                email: app.studentId.email,
-                subject: `HireWay: Your application is ${status}`,
-                message
-            });
-        } catch (mailErr) {
-            console.log("Email failed, but database was updated.");
-        }
+            await sendEmail({ email: app.studentId.email, subject: `HireWay: Your application is ${status}`, message });
+        } catch (mailErr) { console.log("Mail failed") }
 
-        res.json({ message: "Status updated and student notified.", app });
+        res.json({ message: "Status updated.", app });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -9,11 +9,9 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({ university: '', programme: '', skills: '' });
 
-  // HARDCODED API URL to ensure phone connectivity
   const API_URL = "https://hireway-app.onrender.com";
 
   useEffect(() => {
-    // 1. Safe User Loading with Error Catching
     try {
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
@@ -34,7 +32,6 @@ export default function Dashboard() {
   }, [navigate]);
 
   useEffect(() => {
-    // 2. Fetch Stats only if student
     if (!user || user.role !== 'student') return;
     const fetchStats = async () => {
       try {
@@ -43,7 +40,7 @@ export default function Dashboard() {
         const resM = await axios.get(`${API_URL}/api/jobs/match`, { headers });
         const resA = await axios.get(`${API_URL}/api/applications/my-applications`, { headers });
         setStats({ matches: resM.data.length, applied: resA.data.length });
-      } catch (err) { console.log("Fetch failed"); }
+      } catch (err) { console.log("Stats fetch failed"); }
     };
     fetchStats();
   }, [user]);
@@ -63,11 +60,10 @@ export default function Dashboard() {
     } catch (err) { alert("Save Failed"); }
   };
 
-  if (!user) return <div style={{padding: '50px', textAlign: 'center'}}>Loading App...</div>;
+  if (!user) return <div style={{padding: '50px', textAlign: 'center'}}>Loading...</div>;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', fontFamily: 'sans-serif' }}>
-      
+    <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', paddingBottom: '50px' }}>
       {/* MOBILE HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-around', backgroundColor: 'white', padding: '15px', borderBottom: '1px solid #eee' }}>
         <button onClick={() => setTab('overview')} style={{ border: 'none', background: 'none', fontWeight: 'bold', color: tab === 'overview' ? '#2563eb' : '#999' }}>🏠 HOME</button>
@@ -78,13 +74,13 @@ export default function Dashboard() {
 
       <div style={{ padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#0f172a' }}>DASHBOARD</h1>
-        <p style={{ color: '#64748b', marginBottom: '30px' }}>User: {user.name} ({user.role})</p>
+        <p style={{ color: '#64748b', marginBottom: '30px' }}>User: {user.name}</p>
 
         {tab === 'overview' ? (
           <div style={{ display: 'grid', gap: '15px' }}>
             {user.role === 'employer' ? (
               <div style={{ backgroundColor: '#0f172a', padding: '30px', borderRadius: '25px', color: 'white', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '22px' }}>Recruiter Hub</h2>
+                <h2 style={{ fontSize: '22px', fontWeight: 'bold' }}>Recruiter Hub</h2>
                 <button onClick={() => navigate('/post-job')} style={{ marginTop: '20px', width: '100%', padding: '15px', backgroundColor: '#2563eb', color: 'white', borderRadius: '15px', border: 'none', fontWeight: 'bold' }}>POST JOB</button>
                 <button onClick={() => navigate('/manage-applicants')} style={{ marginTop: '10px', width: '100%', padding: '15px', backgroundColor: '#334155', color: 'white', borderRadius: '15px', border: 'none', fontWeight: 'bold' }}>VIEW APPLICANTS</button>
               </div>
@@ -92,15 +88,27 @@ export default function Dashboard() {
               <>
                 <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '25px', border: '1px solid #e2e8f0' }}>
                   <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#2563eb' }}>MATCHES</p>
-                  <h3 style={{ fontSize: '40px', margin: '5px 0' }}>{stats.matches}</h3>
+                  <h3 style={{ fontSize: '40px', margin: '5px 0', fontWeight: 'bold' }}>{stats.matches}</h3>
                 </div>
                 <div onClick={() => navigate('/my-applications')} style={{ backgroundColor: 'white', padding: '25px', borderRadius: '25px', border: '1px solid #e2e8f0' }}>
                   <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#7c3aed' }}>APPLIED</p>
-                  <h3 style={{ fontSize: '40px', margin: '5px 0' }}>{stats.applied}</h3>
+                  <h3 style={{ fontSize: '40px', margin: '5px 0', fontWeight: 'bold' }}>{stats.applied}</h3>
                 </div>
               </>
             )}
           </div>
         ) : (
           <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '25px', border: '1px solid #e2e8f0' }}>
-            <h2 style
+            <h2 style={{ fontWeight: 'bold', marginBottom: '20px' }}>EDIT PROFILE</h2>
+            <form onSubmit={handleSave} style={{ display: 'grid', gap: '10px' }}>
+              <input placeholder="University" style={{ padding: '15px', borderRadius: '12px', border: '1px solid #eee' }} value={profile.university} onChange={(e)=>setProfile({...profile, university: e.target.value})} />
+              <input placeholder="Programme" style={{ padding: '15px', borderRadius: '12px', border: '1px solid #eee' }} value={profile.programme} onChange={(e)=>setProfile({...profile, programme: e.target.value})} />
+              <textarea placeholder="Skills (comma separated)" style={{ padding: '15px', borderRadius: '12px', border: '1px solid #eee', height: '100px' }} value={profile.skills} onChange={(e)=>setProfile({...profile, skills: e.target.value})} />
+              <button type="submit" style={{ padding: '15px', backgroundColor: '#2563eb', color: 'white', borderRadius: '15px', border: 'none', fontWeight: 'bold' }}>SAVE CHANGES</button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
